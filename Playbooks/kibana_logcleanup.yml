@@ -1,0 +1,35 @@
+---
+- hosts: kibana
+  become: Yes
+  tasks:
+     - name: Find current log
+       find:
+          paths: /var/log/kibana/kibana.log
+          file_type: file 
+         
+     - name: Archive current log file
+       archive: 
+          path: /var/log/kibana/kibana.log
+          dest: /var/log/kibana/kibana-{{ansible_date_time.date}}.log.gz
+          format: gz
+
+     - name: Clear old log file 
+       shell: ">kibana.log"
+       args:
+          chdir: /var/log/kibana
+          
+     - name: Find logfiles older than 21 days
+       find: 
+          paths: /var/log/kibana
+          patterns: '*.log.gz'
+          age: '21d'
+          file_type: file
+       register: filesOlderThan21d
+
+     - name: Clear old log archives
+       file: 
+          path: "{{ item.path }}"  
+          state: absent
+       with_items: "{{ filesOlderThan21d.files }}"
+#Separrated Kibana nodes into subgroups based on log mount location 
+- include: kibana_logcleanupALT.yml 

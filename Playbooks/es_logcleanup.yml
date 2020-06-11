@@ -1,0 +1,18 @@
+---
+- hosts: elasticsearch
+  serial: 1
+  become: Yes
+  tasks:
+     - name: Find logfiles older than X days
+       find: 
+          paths: /var/log/elasticsearch/
+          patterns: '*.log.gz'
+          age: 7d
+          file_type: file
+       register: filesOlderThan7d
+
+     - name: Clear log file 
+       file: 
+          path: "{{ item.path }}" 
+          state: absent
+       with_items: "{{ filesOlderThan7d.files }}"

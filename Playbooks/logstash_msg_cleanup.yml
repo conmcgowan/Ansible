@@ -1,0 +1,16 @@
+---
+- hosts: logstash 
+  become: Yes 
+  tasks:
+    #task finds rolled over messages from previous days and removes them from logstash 
+    - name: find TS message file
+      find:
+        paths: /var/log/
+        patterns: 'messages-*'
+      register: logstashMessage
+      
+    - name: clear TS message
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ logstashMessage.files }}"

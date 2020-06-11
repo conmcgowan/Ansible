@@ -1,0 +1,31 @@
+---
+- hosts: ansible
+  become: yes
+  tasks:
+     - name: backup ansible files 
+       synchronize:
+          src: /etc/ansible/
+          dest: /tmp/ansible_bkp/
+       delegate_to: "{{ inventory_hostname }}"
+       tags: ansible
+
+- hosts: logstash
+  become: yes
+  tasks:
+     - name: backup ansible files 
+       copy:
+          src: /etc/logstash/
+          dest: /tmp/ansible_bkp/
+       delegate_to: "{{ inventory_hostname }}"
+       tags: logstash
+       
+- hosts: metricbeat
+  become: yes
+  tasks:
+     - name: backup metricbeat files 
+       synchronize:
+          src: /etc/metricbeat/
+          dest: /tmp/metricbeat_bkp/
+       delegate_to: "{{ inventory_hostname }}"
+       tags: curator 
+      

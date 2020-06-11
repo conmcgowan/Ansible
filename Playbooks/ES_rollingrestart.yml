@@ -1,0 +1,36 @@
+---
+- hosts: elasticsearch 
+  become: True 
+  serial: 1
+  tasks:
+     - name: include vars
+       include_vars: /etc/ansible/Playbooks/vars.yml
+    
+     - name: Disable sharding
+       command: bash /etc/ansible/shellscripts/shardingOff.sh
+
+     - name: Restart Elasticsearch service
+       become_method: sudo
+       become_user: root
+       service:
+          name: elasticsearch
+          state: restarted
+
+     - name: Make sure Elasticsearch is running
+       command: curl -k -u elastic:"{{ elasticpass }}" https://localhost:9200/_cluster/health
+       register: result
+       until: result.stdout.find("yellow") !=  -1 or result.stdout.find("green") !=  -1
+       retries: 300 
+       delay: 1
+       
+     - name: Enable sharding
+       shell: bash /etc/ansible/shellscripts/shardingOn.sh
+       retries: 5
+       delay: 1
+
+     - name: Relocating shards
+       command: curl -k -u elastic:"{{ elasticpass }}" https://localhost:9200/_cluster/health
+       register: result
+       until: result.stdout.find("green") !=  -1
+       retries: 2700
+       delay: 2

@@ -1,0 +1,12 @@
+---
+- hosts: elasticsearch
+  become: false
+  tasks:
+     - name: Ping Server
+       ping:
+       
+     - name: Start Elasticsearch service, if not started
+       become: True
+       become_method: sudo
+       become_user: root
+       service: name=elasticsearch state=started

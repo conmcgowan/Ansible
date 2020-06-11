@@ -1,0 +1,57 @@
+---
+- hosts: ansible
+  become_user: root 
+  tasks:
+      #stashes any accidental git changes 
+      - name: Git stash
+        command: git stash
+        args: 
+           chdir: /etc/ansible/Playbooks/repo/elk/
+        tags: always 
+      #updates repo to clean branch     
+      - name: get clean pull
+        command: git pull 
+        args:
+           chdir: /etc/ansible/Playbooks/repo/elk/
+        tags: always
+      #this will prevent any windows style line endings from being added
+      - name: convert to UNIX format
+        shell: find . -type f -print0 | xargs -0 dos2unix
+        args: 
+           chdir: /tmp/repoansible/
+        become: yes
+        failed_when: false
+        tags: always
+
+#remotely syncs the control host to the remote servers   
+- hosts: all
+  become: false
+  tasks:
+     - name: sync control with remote hosts
+       synchronize:
+         src: repo/
+         dest: /tmp/repoansible/
+       tags: always
+
+#below are the tasks to move the files to the correct locations on the server 
+- hosts: logstash
+  become: yes
+  serial: 1
+  tasks:
+     - name: transfer logstash files
+       command: cp -Rf /tmp/repoansible/elk/logstash/config/ /etc/
+       tags: logstash
+     - name: pause for config reload
+       pause:
+         minutes: 1
+       tags: logstash
+       
+- hosts: ansible
+  become: yes
+  tasks:
+     - name: transfer ansible files
+       copy:
+          src: /tmp/repoansible/elk/Ansible/
+          dest: /etc/ansible/
+       #ansible does not require a restart for service changes 
+       tags: ansible

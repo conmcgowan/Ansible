@@ -1,0 +1,12 @@
+---
+- hosts: logstash
+  become: false
+  tasks:
+     - name: Ping Server
+       ping:
+       
+     - name: Start logstash service, if not started
+       become: True
+       become_method: sudo
+       become_user: root
+       service: name=logstash state=started
