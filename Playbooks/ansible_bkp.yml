@@ -18,14 +18,3 @@
           dest: /tmp/ansible_bkp/
        delegate_to: "{{ inventory_hostname }}"
        tags: logstash
-       
-- hosts: metricbeat
-  become: yes
-  tasks:
-     - name: backup metricbeat files 
-       synchronize:
-          src: /etc/metricbeat/
-          dest: /tmp/metricbeat_bkp/
-       delegate_to: "{{ inventory_hostname }}"
-       tags: curator 
-      
